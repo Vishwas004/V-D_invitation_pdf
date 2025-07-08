@@ -1,5 +1,6 @@
 
 body {
+  overflow-y: hidden;
   font-family: 'Noto Sans Gujarati', sans-serif;
   text-align: center;
   padding: 20px;
@@ -7,7 +8,7 @@ body {
 }
 
 .section {
-  margin: 20px auto;
+  margin: 16px auto;
   padding: 20px;
   background: white;
   border-radius: 8px;
