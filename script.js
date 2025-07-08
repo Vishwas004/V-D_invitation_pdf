@@ -70,9 +70,10 @@ async function generateFromExcel() {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+    const zip = new JSZip();
+
     for (let i = 1; i < rows.length; i++) {
       const [name] = rows[i];
-
       const pdfDoc = await PDFLib.PDFDocument.load(pdfTemplateBytes);
       const page = pdfDoc.getPages()[0];
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
@@ -82,17 +83,21 @@ async function generateFromExcel() {
         y: 885,
         size: 23,
         font,
-        color: PDFLib.rgb(1, 0, 0)
+        color: PDFLib.rgb(1, 0, 0),
       });
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `Invitation_${name}.pdf`;
-      a.click();
+      zip.file(`Invitation_${name}.pdf`, pdfBytes);
     }
+
+    // 🔽 Create zip and download once
+    const content = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(content);
+    a.download = "All_Invitations.zip";
+    a.click();
   };
 
   reader.readAsArrayBuffer(excelFile);
 }
+
