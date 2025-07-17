@@ -35,11 +35,14 @@
     <h2>Option 2: Upload Excel</h2>
     <input type="file" id="excelUpload" accept=".xlsx">
     <button onclick="generateFromExcel()">Generate All PDFs</button><br>
-    <img src="icon.png" alt="Your Logo" width="50" height="50" style="padding-top: 50px;">
+    <img src="icon.png" alt="Your Logo" width="50" height="50" onclick="toggleLog()" style="padding-top: 50px;">
   </div>
 
+  <div id="nameLogSection" class="section" style="display: none;">
+    <h3>Generated PDF Name </h3>
+    <textarea id="nameLog" rows="10" cols="40" readonly placeholder="Generated names here..."></textarea><br>
+    <!-- <button onclick="clearLog()">🧹 Clear Log</button> -->
+  </div>
   <script src="script.js"></script>
-
-
 </body>
 </html>
