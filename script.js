@@ -1,6 +1,7 @@
 let pdfTemplateBytes = null;
+let gujaratiFontBytes = null;
 
-// ✅ Load default PDF template on page load
+// ✅ Load default PDF template
 fetch("demo copy.pdf")
   .then(res => res.arrayBuffer())
   .then(bytes => {
@@ -9,14 +10,20 @@ fetch("demo copy.pdf")
   })
   .catch(err => console.error("❌ Failed to load default PDF:", err));
 
+// ✅ Restore name log from localStorage on page load
+window.addEventListener("DOMContentLoaded", () => {
+  const savedLog = localStorage.getItem("nameLog");
+  if (savedLog) {
+    document.getElementById("nameLog").value = savedLog;
+  }
+});
+
 async function generateManualPDF() {
   const name = document.getElementById("nameInput").value;
-
   if (!name || !pdfTemplateBytes) {
     return alert("Please enter a name.");
   }
 
-  // ✅ Load and edit PDF
   const pdfDoc = await PDFLib.PDFDocument.load(pdfTemplateBytes);
   const page = pdfDoc.getPages()[0];
   const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
@@ -26,18 +33,20 @@ async function generateManualPDF() {
     y: 885,
     size: 23,
     font,
-    color: PDFLib.rgb(1, 0, 0) // 🔴 Red
+    color: PDFLib.rgb(1, 0, 0), // red
   });
 
   const pdfBytes = await pdfDoc.save();
   await sharePDF(pdfBytes, `Invitation_${name}.pdf`);
+
+  // ✅ Add name to log
+  appendToNameLog(name);
 }
 
 async function sharePDF(pdfBytes, fileName = "invitation.pdf") {
   const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const file = new File([blob], fileName, { type: "application/pdf" });
 
-  // ✅ Use Web Share API if supported
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
@@ -50,7 +59,6 @@ async function sharePDF(pdfBytes, fileName = "invitation.pdf") {
       console.error("❌ Share failed:", error);
     }
   } else {
-    // ❌ Fallback: Just open the PDF in browser
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
     alert("Sharing not supported. PDF opened in new tab.");
@@ -62,6 +70,9 @@ async function generateFromExcel() {
   if (!excelFile || !pdfTemplateBytes) {
     return alert("Please upload Excel file first.");
   }
+
+  document.getElementById("nameLog").value = "";
+  localStorage.removeItem("nameLog");
 
   const reader = new FileReader();
   reader.onload = async (e) => {
@@ -91,16 +102,17 @@ async function generateFromExcel() {
 
         const pdfBytes = await pdfDoc.save();
         zip.file(`Invitation_${name}.pdf`, pdfBytes);
+
+        // ✅ Add name to log
+        appendToNameLog(name);
       }
 
-      // ✅ Generate and trigger download of ZIP file
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(zipBlob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = "All_Invitations.zip";
-      document.body.appendChild(a); // ⬅ required on some mobile browsers
+      document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
 
@@ -111,4 +123,34 @@ async function generateFromExcel() {
   };
 
   reader.readAsArrayBuffer(excelFile);
+}
+
+// ✅ Append name to log + save in localStorage
+function appendToNameLog(name) {
+  const log = document.getElementById("nameLog");
+
+  const now = new Date();
+  const timestamp = now.toLocaleString("en-IN", {
+    dateStyle: "short",
+    timeStyle: "short",
+    hour12: true,
+  });
+
+  const entry = `✔️ ${name} - ${timestamp}`;
+  log.value += entry + "\n";
+
+  localStorage.setItem("nameLog", log.value);
+}
+
+
+function toggleLog() {
+  const logSection = document.getElementById("nameLogSection");
+  logSection.style.display = logSection.style.display === "none" ? "block" : "none";
+}
+
+
+// ✅ Clear name log manually
+function clearLog() {
+  document.getElementById("nameLog").value = "";
+  localStorage.removeItem("nameLog");
 }
